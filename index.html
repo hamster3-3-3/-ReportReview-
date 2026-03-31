@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SharePoint 檔案數看板</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#fff; --line:#e5e7eb; --text:#111827; --muted:#6b7280;
+      --accent:#2563eb; --ok:#059669; --warn:#d97706; --bad:#dc2626;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    h1{margin:0 0 8px;font-size:28px}
+    .sub{color:var(--muted);margin:0 0 20px}
+    .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 20px}
+    button{
+      border:1px solid var(--line); background:#fff; color:var(--text);
+      padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600;
+    }
+    button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+    .status{padding:10px 12px;border-radius:10px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+    .row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .title{font-size:20px;font-weight:700;margin:0 0 4px}
+    .path{font-size:12px;color:var(--muted);word-break:break-all;margin:0 0 14px}
+    .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .pill{border:1px solid var(--line);border-radius:12px;padding:12px}
+    .pill .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .pill .val{font-size:24px;font-weight:700}
+    details{border-top:1px solid var(--line);padding-top:12px}
+    summary{cursor:pointer;font-weight:700}
+    ul{margin:10px 0 0 18px;padding:0;max-height:240px;overflow:auto}
+    li{margin:6px 0;word-break:break-all}
+    .muted{color:var(--muted)}
+    .footer{margin-top:18px;font-size:13px;color:var(--muted)}
+    code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>SharePoint 檔案數看板</h1>
+    <p class="sub">此版本會自動讀取 <code>./data/counts.json</code>。</p>
+
+    <div class="toolbar">
+      <button class="primary" id="reloadBtn">重新讀取</button>
+      <div class="status" id="status">尚未讀取資料</div>
+    </div>
+
+    <div id="cards" class="grid"></div>
+
+    <div class="footer">
+      讀取來源：<code>./data/counts.json</code>
+    </div>
+  </div>
+
+  <script>
+    const STATUS = document.getElementById('status');
+    const CARDS = document.getElementById('cards');
+    const SOURCE = './data/counts.json';
+
+    function esc(s){
+      return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+    }
+
+    function render(data){
+      const updatedAt = data?.updatedAt ?? '未知';
+      const items = Array.isArray(data?.items) ? data.items : [];
+      STATUS.textContent = `已讀取：${updatedAt}`;
+      CARDS.innerHTML = items.map(item => {
+        const files = Array.isArray(item.files) ? item.files : [];
+        return `
+          <section class="card">
+            <div class="row">
+              <div>
+                <h2 class="title">${esc(item.title)}</h2>
+                <div class="path">${esc(item.folderPath)}</div>
+              </div>
+            </div>
+            <div class="meta">
+              <div class="pill">
+                <div class="label">當層檔案數</div>
+                <div class="val">${Number(item.count ?? 0)}</div>
+              </div>
+              <div class="pill">
+                <div class="label">當層資料夾數</div>
+                <div class="val">${Number(item.subfolderCount ?? 0)}</div>
+              </div>
+            </div>
+            <details>
+              <summary>檔名清單（${files.length}）</summary>
+              ${files.length ? `<ul>${files.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : `<div class="muted" style="margin-top:10px;">沒有檔案</div>`}
+            </details>
+          </section>
+        `;
+      }).join('');
+      if (!items.length) {
+        CARDS.innerHTML = '<section class="card"><div class="muted">counts.json 內容為空或格式不正確。</div></section>';
+      }
+    }
+
+    async function loadData(){
+      STATUS.textContent = '讀取中...';
+      try{
+        const res = await fetch(SOURCE + '?t=' + Date.now(), {cache:'no-store'});
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        render(data);
+      }catch(err){
+        STATUS.textContent = '讀取失敗';
+        CARDS.innerHTML = `<section class="card"><div class="muted">無法讀取 <code>${esc(SOURCE)}</code><br>${esc(err.message)}</div></section>`;
+      }
+    }
+
+    document.getElementById('reloadBtn').addEventListener('click', loadData);
+    loadData();
+  </script>
+</body>
+</html>
