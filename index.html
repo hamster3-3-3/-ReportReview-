@@ -13,7 +13,6 @@
     body{margin:0;font-family:Arial,"Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
     .wrap{max-width:1100px;margin:0 auto;padding:24px}
     h1{margin:0 0 8px;font-size:28px}
-    .sub{color:var(--muted);margin:0 0 20px}
     .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 20px}
     button{
       border:1px solid var(--line); background:#fff; color:var(--text);
@@ -26,7 +25,7 @@
     .row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
     .title{font-size:20px;font-weight:700;margin:0 0 4px}
     .path{font-size:12px;color:var(--muted);word-break:break-all;margin:0 0 14px}
-    .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .meta{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:10px;margin-bottom:14px}
     .pill{border:1px solid var(--line);border-radius:12px;padding:12px}
     .pill .label{font-size:12px;color:var(--muted);margin-bottom:6px}
     .pill .val{font-size:24px;font-weight:700}
@@ -35,14 +34,12 @@
     ul{margin:10px 0 0 18px;padding:0;max-height:240px;overflow:auto}
     li{margin:6px 0;word-break:break-all}
     .muted{color:var(--muted)}
-    .footer{margin-top:18px;font-size:13px;color:var(--muted)}
     code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>SharePoint 檔案數看板</h1>
-    <p class="sub">此版本會自動讀取 <code>./data/counts.json</code>。</p>
 
     <div class="toolbar">
       <button class="primary" id="reloadBtn">重新讀取</button>
@@ -50,16 +47,17 @@
     </div>
 
     <div id="cards" class="grid"></div>
-
-    <div class="footer">
-      讀取來源：<code>./data/counts.json</code>
-    </div>
   </div>
 
   <script>
     const STATUS = document.getElementById('status');
     const CARDS = document.getElementById('cards');
     const SOURCE = './data/counts.json';
+    const HIDDEN_PATHS = new Set([
+      '/Shared Documents/晉欣廠/晉欣-【JFM指導】生產管理報表/115',
+      '/Shared Documents/晉欣廠/晉欣組合-生產日報(114年七月起)/115',
+      '/Shared Documents/晉欣廠/晉欣-半成品管理日報(114年七月起)/115'
+    ]);
 
     function esc(s){
       return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -67,7 +65,8 @@
 
     function render(data){
       const updatedAt = data?.updatedAt ?? '未知';
-      const items = Array.isArray(data?.items) ? data.items : [];
+      const rawItems = Array.isArray(data?.items) ? data.items : [];
+      const items = rawItems.filter(item => !HIDDEN_PATHS.has(String(item?.folderPath ?? '')));
       STATUS.textContent = `已讀取：${updatedAt}`;
       CARDS.innerHTML = items.map(item => {
         const files = Array.isArray(item.files) ? item.files : [];
@@ -83,10 +82,6 @@
               <div class="pill">
                 <div class="label">當層檔案數</div>
                 <div class="val">${Number(item.count ?? 0)}</div>
-              </div>
-              <div class="pill">
-                <div class="label">當層資料夾數</div>
-                <div class="val">${Number(item.subfolderCount ?? 0)}</div>
               </div>
             </div>
             <details>
