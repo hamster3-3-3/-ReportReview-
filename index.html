@@ -12,7 +12,6 @@
       --text:#111827;
       --muted:#6b7280;
       --accent:#2563eb;
-      --soft:#f9fafb;
     }
     *{box-sizing:border-box}
     body{
@@ -22,7 +21,7 @@
       color:var(--text);
     }
     .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    h1{margin:0 0 8px;font-size:28px}
+    h1{margin:0 0 16px;font-size:28px}
     .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 20px}
     button{
       border:1px solid var(--line);
@@ -49,35 +48,20 @@
       padding:18px;
       box-shadow:0 4px 16px rgba(0,0,0,.04);
     }
-    .row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
     .title{font-size:20px;font-weight:700;margin:0 0 14px}
-    .meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
-    .pill{
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:12px;
-      background:#fff;
-      min-height:84px;
-    }
+    .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+    .pill{border:1px solid var(--line);border-radius:12px;padding:12px;min-height:90px}
     .pill .label{font-size:12px;color:var(--muted);margin-bottom:6px}
-    .pill .val{font-size:24px;font-weight:700;line-height:1.2}
-    .pill.wide{grid-column:1 / -1;min-height:auto;background:var(--soft)}
-    .text-val{
-      font-size:14px;
-      font-weight:600;
-      line-height:1.5;
-      word-break:break-all;
-    }
+    .pill .val{font-size:24px;font-weight:700}
+    .info-block{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
+    .info-block .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .info-block .val{font-size:15px;line-height:1.5;word-break:break-word}
     details{border-top:1px solid var(--line);padding-top:12px}
     summary{cursor:pointer;font-weight:700}
     ul{margin:10px 0 0 18px;padding:0;max-height:240px;overflow:auto}
     li{margin:6px 0;word-break:break-all}
     .muted{color:var(--muted)}
     code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
-    @media (max-width: 700px){
-      .meta{grid-template-columns:1fr}
-      .pill.wide{grid-column:auto}
-    }
   </style>
 </head>
 <body>
@@ -104,6 +88,14 @@
         .replaceAll('>','&gt;');
     }
 
+    function getLastFileName(item){
+      return item?.lastFileName || '';
+    }
+
+    function getUploadTime(item){
+      return item?.lastUploadedAt || item?.uploadedAt || item?.lastModified || item?.modifiedTime || item?.lastModifiedTime || '';
+    }
+
     function render(data){
       const updatedAt = data?.updatedAt ?? '未知';
       const items = Array.isArray(data?.items) ? data.items : [];
@@ -115,32 +107,30 @@
       }
 
       CARDS.innerHTML = items.map(item => {
-        const files = Array.isArray(item.files) ? item.files : [];
-        const fileCount = Number(item.count ?? 0);
-        const lastFileName = item?.lastFileName ? esc(item.lastFileName) : '—';
-        const lastUploadedAt = item?.lastUploadedAt ? esc(item.lastUploadedAt) : '—';
+        const files = Array.isArray(item?.files) ? item.files : [];
+        const lastFileName = getLastFileName(item);
+        const uploadTime = getUploadTime(item);
 
         return `
           <section class="card">
-            <div class="row">
-              <div>
-                <h2 class="title">${esc(item.title)}</h2>
-              </div>
-            </div>
+            <h2 class="title">${esc(item?.title || '')}</h2>
+
             <div class="meta">
               <div class="pill">
                 <div class="label">當層檔案數</div>
-                <div class="val">${fileCount}</div>
+                <div class="val">${Number(item?.count ?? 0)}</div>
               </div>
-              <div class="pill wide">
-                <div class="label">最近檔案</div>
-                <div class="text-val">${lastFileName}</div>
-              </div>
-              <div class="pill wide">
+              <div class="pill">
                 <div class="label">最近上傳時間</div>
-                <div class="text-val">${lastUploadedAt}</div>
+                <div class="val" style="font-size:16px;line-height:1.4;word-break:break-word;">${uploadTime ? esc(uploadTime) : '—'}</div>
               </div>
             </div>
+
+            <div class="info-block">
+              <div class="label">最近檔案</div>
+              <div class="val">${lastFileName ? esc(lastFileName) : '—'}</div>
+            </div>
+
             <details>
               <summary>檔名清單（${files.length}）</summary>
               ${files.length
@@ -155,7 +145,7 @@
     async function loadData(){
       STATUS.textContent = '讀取中...';
       try{
-        const res = await fetch(SOURCE + '?t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch(SOURCE + '?t=' + Date.now(), { cache:'no-store' });
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         render(data);
