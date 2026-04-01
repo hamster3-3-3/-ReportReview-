@@ -48,7 +48,22 @@
       padding:18px;
       box-shadow:0 4px 16px rgba(0,0,0,.04);
     }
-    .title{font-size:20px;font-weight:700;margin:0 0 14px}
+    .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+    .title{font-size:20px;font-weight:700;margin:0}
+    .open-link{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--accent);
+      text-decoration:none;
+      font-weight:700;
+      white-space:nowrap;
+    }
+    .open-link:hover{background:#eff6ff}
     .meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
     .pill{border:1px solid var(--line);border-radius:12px;padding:12px;min-height:90px}
     .pill .label{font-size:12px;color:var(--muted);margin-bottom:6px}
@@ -96,6 +111,12 @@
       return item?.lastUploadedAt || item?.uploadedAt || item?.lastModified || item?.modifiedTime || item?.lastModifiedTime || '';
     }
 
+    const FOLDER_LINKS = {
+      mgmt: 'https://tfmmvlsfamilycom.sharepoint.com/sites/msteams_6e232e/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2Fmsteams%5F6e232e%2FShared%20Documents%2F%E6%99%89%E6%AC%A3%E5%BB%A0%2F%E6%99%89%E6%AC%A3%2D%E3%80%90JFM%E6%8C%87%E5%B0%8E%E3%80%91%E7%94%9F%E7%94%A2%E7%AE%A1%E7%90%86%E5%A0%B1%E8%A1%A8%2F115&viewid=9e47012e%2D882f%2D4bb1%2D9679%2D95296816f1dc',
+      daily: 'https://tfmmvlsfamilycom.sharepoint.com/sites/msteams_6e232e/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2Fmsteams%5F6e232e%2FShared%20Documents%2F%E6%99%89%E6%AC%A3%E5%BB%A0%2F%E6%99%89%E6%AC%A3%E7%B5%84%E5%90%88%2D%E7%94%9F%E7%94%A2%E6%97%A5%E5%A0%B1%28114%E5%B9%B4%E4%B8%83%E6%9C%88%E8%B5%B7%29%2F115&viewid=9e47012e%2D882f%2D4bb1%2D9679%2D95296816f1dc',
+      semi: 'https://tfmmvlsfamilycom.sharepoint.com/sites/msteams_6e232e/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2Fmsteams%5F6e232e%2FShared%20Documents%2F%E6%99%89%E6%AC%A3%E5%BB%A0%2F%E6%99%89%E6%AC%A3%2D%E5%8D%8A%E6%88%90%E5%93%81%E7%AE%A1%E7%90%86%E6%97%A5%E5%A0%B1%28114%E5%B9%B4%E4%B8%83%E6%9C%88%E8%B5%B7%29%2F115&viewid=9e47012e%2D882f%2D4bb1%2D9679%2D95296816f1dc'
+    };
+
     function render(data){
       const updatedAt = data?.updatedAt ?? '未知';
       const items = Array.isArray(data?.items) ? data.items : [];
@@ -110,10 +131,14 @@
         const files = Array.isArray(item?.files) ? item.files : [];
         const lastFileName = getLastFileName(item);
         const uploadTime = getUploadTime(item);
+        const folderLink = FOLDER_LINKS[item?.key] || '';
 
         return `
           <section class="card">
-            <h2 class="title">${esc(item?.title || '')}</h2>
+            <div class="card-head">
+              <h2 class="title">${esc(item?.title || '')}</h2>
+              ${folderLink ? `<a class="open-link" href="${folderLink}" target="_blank" rel="noopener noreferrer">打開檔案位置</a>` : ''}
+            </div>
 
             <div class="meta">
               <div class="pill">
