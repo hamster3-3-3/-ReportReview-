@@ -48,7 +48,8 @@
       padding:18px;
       box-shadow:0 4px 16px rgba(0,0,0,.04);
     }
-    .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+    .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+    .card-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     .title{font-size:20px;font-weight:700;margin:0}
     .open-link{
       display:inline-flex;
@@ -137,7 +138,10 @@
           <section class="card">
             <div class="card-head">
               <h2 class="title">${esc(item?.title || '')}</h2>
-              ${folderLink ? `<a class="open-link" href="${folderLink}" target="_blank" rel="noopener noreferrer">打開檔案位置</a>` : ''}
+              <div class="card-actions">
+                ${folderLink ? `<a class="open-link" href="${folderLink}" target="_blank" rel="noopener noreferrer">打開檔案位置</a>` : ''}
+                <a class="open-link" href="https://docs.google.com/spreadsheets/d/1-co9vTjLwjmTQZpTVpCrDFNtbhPdrGWowjVN0GX7arE/edit?gid=1842686068#gid=1842686068" target="_blank" rel="noopener noreferrer">製管競賽追蹤系統填寫</a>
+              </div>
             </div>
 
             <div class="meta">
